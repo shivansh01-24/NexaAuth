@@ -1,30 +1,41 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
+import { z } from "zod";
+
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!email || !password) {
-      setError("Email and password are required.");
-      return;
-    }
-
-    setError("");
-    console.log("Submitted email:", email);
-    console.log("Submitted password:", password);
-  }
-
   return (
     <main>
       <h1>Login</h1>
 
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+
+          setError("");
+
+          const result = loginSchema.safeParse({
+            email,
+            password,
+          });
+
+          if (!result.success) {
+            setError(result.error.issues[0].message);
+            return;
+          }
+
+          console.log("Submitted data:", result.data);
+        }}
+      >
         <input
           type="email"
           placeholder="Enter your email"
@@ -43,8 +54,8 @@ export default function LoginPage() {
       </form>
 
       {error && <p>{error}</p>}
-      <p>Current email: {email}</p>
 
+      <p>Current email: {email}</p>
     </main>
   );
 }
